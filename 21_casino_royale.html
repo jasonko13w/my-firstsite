@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>皇家博弈娛樂城 - 21點 & 射龍門</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      background: radial-gradient(circle at center, #0f2027, #203a43, #081014);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .cinzel { font-family: 'Cinzel', serif; }
+    .felt-table {
+      background: radial-gradient(ellipse at 50% 40%, #0d5c3a 0%, #08432a 55%, #042718 100%);
+      box-shadow: inset 0 0 100px rgba(0,0,0,0.85), 0 20px 50px rgba(0,0,0,0.9);
+      border: 12px solid #5a3818;
+      outline: 2px solid #d4af37;
+    }
+    .dg-table {
+      background: radial-gradient(ellipse at 50% 40%, #1a365d 0%, #0f223d 55%, #081220 100%);
+      box-shadow: inset 0 0 100px rgba(0,0,0,0.85), 0 20px 50px rgba(0,0,0,0.9);
+      border: 12px solid #4a3319;
+      outline: 2px solid #63b3ed;
+    }
+    .playing-card {
+      transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: -2px 4px 10px rgba(0,0,0,0.6);
+      backface-visibility: hidden;
+    }
+    .playing-card:hover {
+      transform: translateY(-4px);
+    }
+    .card-overlap:not(:first-child) {
+      margin-left: -2.2rem;
+    }
+    .active-seat-glow {
+      box-shadow: 0 0 25px rgba(250, 204, 21, 0.9), inset 0 0 15px rgba(250, 204, 21, 0.4);
+      border-color: #facc15 !important;
+      animation: pulseGlow 1.8s infinite alternate;
+    }
+    @keyframes pulseGlow {
+      from { transform: scale(1); filter: brightness(1); }
+      to { transform: scale(1.02); filter: brightness(1.15); }
+    }
+    .chip-btn {
+      transition: all 0.15s ease-out;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.3);
+    }
+    .chip-btn:active:not(:disabled) {
+      transform: scale(0.92) translateY(2px);
+    }
+    .chip-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(212, 175, 55, 0.4);
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="text-white flex flex-col min-h-screen">
+  
+  <header class="bg-black/80 backdrop-blur-md border-b border-amber-500/30 sticky top-0 z-40 px-3 py-2 sm:px-6">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center space-x-3">
+        <span class="text-2xl drop-shadow-md">👑</span>
+        <div>
+          <h1 class="text-lg sm:text-xl font-black cinzel tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500">
+            CASINO ROYALE
+          </h1>
+          <div class="text-[10px] text-amber-200/70">豪華雙遊戲娛樂城</div>
+        </div>
+      </div>
+
+      <!-- Game Switcher Tabs -->
+      <div class="flex items-center bg-black/60 p-1 rounded-xl border border-amber-500/40 shadow-inner">
+        <button id="navBlackjackBtn" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition flex items-center space-x-1 bg-amber-500 text-black shadow-lg">
+          <span>♠</span>
+          <span>21點</span>
+        </button>
+        <button id="navDragonGateBtn" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition flex items-center space-x-1 text-gray-300 hover:text-white">
+          <span>⚽</span>
+          <span>射龍門</span>
+        </button>
+      </div>
+
+      <!-- Header Action Buttons -->
+      <div class="flex items-center space-x-2">
+        <button id="audioToggleBtn" class="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg border text-xs font-semibold bg-emerald-950/80 border-emerald-500/60 text-emerald-300 transition shadow">
+          <span id="audioIcon">🔊</span>
+          <span id="audioText">音效: 開</span>
+        </button>
+        
+        <button id="randomizeTableBtn" class="px-2.5 py-1.5 rounded-lg border border-yellow-500/50 bg-yellow-950/50 text-yellow-300 hover:bg-yellow-800/60 text-xs font-semibold transition" title="重新隨機分配座位與對手">
+          🎲 換桌
+        </button>
+
+        <button id="rulesBtn" class="p-1.5 rounded-lg border border-amber-500/40 bg-black/40 hover:bg-amber-500/20 text-xs text-amber-300" title="遊戲規則說明">
+          📖
+        </button>
+
+        <div class="flex items-center space-x-1.5">
+          <div class="flex items-center bg-gradient-to-r from-amber-950 to-black border border-amber-500/60 px-3 py-1 rounded-full shadow-inner">
+            <span class="text-amber-400 font-bold mr-1 text-xs">錢包:</span>
+            <span id="bankrollDisplay" class="text-yellow-300 font-black text-sm tracking-wide">$2,000</span>
+          </div>
+
+          <button id="topUpBtn" class="flex items-center space-x-1 px-3 py-1 rounded-full border border-emerald-300 bg-gradient-to-r from-emerald-600 via-green-500 to-teal-600 hover:from-emerald-500 hover:to-green-400 text-white font-black text-xs shadow-lg transition transform active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:grayscale" title="每次點擊充值 $1,000（上限3次）">
+            <span>➕</span>
+            <span id="topUpBtnText">儲值 $1,000 (3/3)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-2 sm:p-4 flex flex-col justify-between">
+    
+    <div id="blackjackView" class="w-full flex-1 flex flex-col justify-between transition-all duration-300">
+      <div class="felt-table rounded-3xl p-4 sm:p-6 mb-3 relative flex-1 flex flex-col justify-between min-h-[500px]">
+        
+        <!-- Top Table Info -->
+        <div class="flex justify-between items-center text-xs text-amber-200/80 mb-2 border-b border-emerald-800/60 pb-2">
+          <div class="flex items-center space-x-2">
+            <span class="bg-black/50 px-2.5 py-1 rounded-full border border-amber-500/30">
+              輪換倒數: <strong id="bjRoundBadge" class="text-amber-300">1/3 局</strong>
+            </span>
+            <span class="hidden sm:inline bg-black/50 px-2.5 py-1 rounded-full border border-emerald-700">
+              莊家 17 點停牌 / 支援分牌 / 滿 3 局換席
+            </span>
+          </div>
+          <div class="bg-black/50 px-2.5 py-1 rounded-full border border-amber-500/30 text-amber-300">
+            牌靴餘量: <span id="shoeBadge">312</span> 張
+          </div>
+        </div>
+
+        <!-- Dealer Zone -->
+        <div class="flex flex-col items-center my-2">
+          <div class="flex items-center space-x-2 mb-1">
+            <span class="text-base sm:text-lg">🤵</span>
+            <span class="font-bold text-amber-200 tracking-wider text-sm sm:text-base drop-shadow-md">莊家 (DEALER)</span>
+            <span id="dealerScoreBadge" class="bg-black/80 px-2.5 py-0.5 rounded-full text-xs font-bold text-yellow-400 border border-yellow-500/50">? 點</span>
+          </div>
+
+          <div id="dealerHandContainer" class="flex justify-center items-center min-h-[96px] mt-1"></div>
+
+          <div id="dealerSplitArea" class="hidden flex gap-4 mt-2">
+            <div class="bg-black/40 p-2 rounded-xl border border-emerald-500/40 text-center shadow-lg">
+              <div class="text-[10px] text-emerald-300">#1 手 (<span id="dealerSplitScore1">0</span>)</div>
+              <div id="dealerSplitSlot1" class="flex justify-center mt-1 min-h-[85px]"></div>
+            </div>
+            <div class="bg-black/40 p-2 rounded-xl border border-emerald-500/40 text-center shadow-lg">
+              <div class="text-[10px] text-emerald-300">#2 手 (<span id="dealerSplitScore2">0</span>)</div>
+              <div id="dealerSplitSlot2" class="flex justify-center mt-1 min-h-[85px]"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table Banner Message -->
+        <div id="actionMessage" class="text-center my-2 text-sm sm:text-base font-bold text-yellow-300 bg-black/70 py-1.5 px-6 rounded-full max-w-lg mx-auto border border-amber-500/50 shadow-lg tracking-wide">
+          請選擇下注籌碼並點擊【發牌】
+        </div>
+
+        <!-- 4 Seats Container -->
+        <div class="w-full mt-2">
+          <div id="seatsContainer" class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4"></div>
+        </div>
+      </div>
+
+      <div class="bg-black/85 backdrop-blur-md rounded-2xl p-3 border border-amber-500/50 shadow-2xl flex flex-col gap-2">
+        <div id="betControls" class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center space-x-1.5 sm:space-x-3 overflow-x-auto custom-scroll py-1 px-1">
+            <span class="text-xs text-amber-200 font-bold mr-1">下注:</span>
+            <!-- Updated Chips -->
+            <button id="chip50" class="chip-btn w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-blue-800 border-2 border-blue-400 font-black text-xs text-white flex items-center justify-center shadow-lg">$50</button>
+            <button id="chip100" class="chip-btn w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-neutral-900 border-2 border-amber-400 font-black text-xs text-yellow-400 flex items-center justify-center shadow-lg">$100</button>
+            <button id="chip250" class="chip-btn w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-teal-700 border-2 border-teal-300 font-black text-xs text-white flex items-center justify-center shadow-lg">$250</button>
+            <button id="chip500" class="chip-btn w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-purple-700 border-2 border-purple-300 font-black text-xs text-white flex items-center justify-center shadow-lg">$500</button>
+            <button id="chip1000" class="chip-btn w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-rose-700 border-2 border-rose-300 font-black text-xs text-white flex items-center justify-center shadow-lg">$1k</button>
+            <button id="chip2000" class="chip-btn w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-amber-600 border-2 border-yellow-200 font-black text-xs text-yellow-100 flex items-center justify-center shadow-lg">$2k</button>
+          </div>
+
+          <div class="flex items-center space-x-2 ml-auto">
+            <button id="clearBetBtn" class="px-3 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold border border-gray-600 transition shadow">清除</button>
+            <button id="doubleBetBtn" class="px-3 py-2 rounded-xl bg-amber-900 hover:bg-amber-800 text-amber-200 text-xs font-bold border border-amber-600 transition shadow">雙倍注</button>
+            <button id="dealBtn" class="px-6 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-black font-black text-sm shadow-xl border border-yellow-200 transition transform active:scale-95">發牌</button>
+          </div>
+        </div>
+
+        <div id="playControls" class="hidden flex flex-wrap items-center justify-center gap-2 pt-1 border-t border-gray-800">
+          <button id="hitBtn" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm shadow-lg border border-emerald-300 transition transform active:scale-95">加牌 (HIT)</button>
+          <button id="standBtn" class="px-5 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-600 text-white font-black text-sm shadow-lg border border-rose-400 transition transform active:scale-95">停牌 (STAND)</button>
+          <button id="doubleDownBtn" class="px-4 py-2.5 rounded-xl bg-yellow-600 hover:bg-yellow-500 text-white font-bold text-xs sm:text-sm shadow border border-yellow-300 transition disabled:opacity-40 disabled:cursor-not-allowed">雙倍 (DOUBLE)</button>
+          <button id="splitBtn" class="px-4 py-2.5 rounded-xl bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs sm:text-sm shadow border border-purple-300 transition disabled:opacity-40 disabled:cursor-not-allowed">分牌 (SPLIT)</button>
+          <button id="surrenderBtn" class="px-4 py-2.5 rounded-xl bg-gray-700 hover:bg-gray-600 text-gray-300 font-bold text-xs sm:text-sm transition shadow border border-gray-500">投降 (SURRENDER)</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="dragonGateView" class="hidden w-full flex-1 flex flex-col justify-between transition-all duration-300">
+      <div class="dg-table rounded-3xl p-4 sm:p-6 mb-3 relative flex-1 flex flex-col justify-between min-h-[500px]">
+        
+        <div class="flex justify-between items-center text-xs text-blue-200/80 mb-2 border-b border-blue-900/60 pb-2">
+          <div class="flex items-center space-x-2">
+            <span class="bg-black/50 px-2.5 py-1 rounded-full border border-blue-500/30">
+              輪換倒數: <strong id="dgRoundBadge" class="text-blue-300">1/3 局</strong>
+            </span>
+            <span class="hidden sm:inline bg-black/50 px-2.5 py-1 rounded-full border border-blue-700">
+              撞柱賠雙倍 / 對子可猜大小 / 三條賠三倍
+            </span>
+          </div>
+          
+          <div class="flex items-center bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-3 py-1 rounded-full border border-yellow-500/50 shadow-lg">
+            <span class="text-yellow-400 font-bold mr-1">🏆 底池彩金:</span>
+            <span id="dgPotDisplay" class="text-yellow-300 font-black text-sm">$1,000</span>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-center my-3">
+          <div class="text-xs font-bold text-blue-200 uppercase tracking-wider mb-2 drop-shadow-sm">⚽ 龍門球場</div>
+          
+          <div class="flex items-center justify-center gap-3 sm:gap-6 min-h-[125px]">
+            <div class="flex flex-col items-center">
+              <span class="text-[11px] text-blue-300 font-semibold mb-1">左門柱</span>
+              <div id="dgLeftCard" class="w-16 h-24 sm:w-20 sm:h-28 rounded-xl bg-blue-950/60 border-2 border-dashed border-blue-400/50 flex items-center justify-center shadow-inner">
+                <span class="text-blue-400/40 text-xs">空</span>
+              </div>
+            </div>
+
+            <div class="flex flex-col items-center scale-105">
+              <span class="text-[11px] text-yellow-300 font-bold mb-1">射門球 (第3張)</span>
+              <div id="dgTargetCard" class="w-16 h-24 sm:w-20 sm:h-28 rounded-xl bg-yellow-950/40 border-2 border-yellow-400/50 flex items-center justify-center shadow-2xl">
+                <span class="text-yellow-400/40 text-xs font-bold">待射門</span>
+              </div>
+            </div>
+
+            <div class="flex flex-col items-center">
+              <span class="text-[11px] text-blue-300 font-semibold mb-1">右門柱</span>
+              <div id="dgRightCard" class="w-16 h-24 sm:w-20 sm:h-28 rounded-xl bg-blue-950/60 border-2 border-dashed border-blue-400/50 flex items-center justify-center shadow-inner">
+                <span class="text-blue-400/40 text-xs">空</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="dgProbabilityBadge" class="mt-3 text-xs bg-black/70 px-4 py-1.5 rounded-full text-blue-200 border border-blue-500/50 shadow tracking-wide">
+            門柱未就緒
+          </div>
+        </div>
+
+        <div id="dgMessage" class="text-center my-2 text-sm sm:text-base font-bold text-yellow-300 bg-black/70 py-1.5 px-6 rounded-full max-w-lg mx-auto border border-blue-500/50 shadow-lg tracking-wide">
+          點擊【開新局】全桌繳納 $50 底注進入彩金池
+        </div>
+
+        <div class="w-full mt-2">
+          <div id="dgSeatsContainer" class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4"></div>
+        </div>
+      </div>
+
+      <div class="bg-black/85 backdrop-blur-md rounded-2xl p-3 border border-blue-500/50 shadow-2xl flex flex-col gap-2">
+        <div id="dgBetControls" class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center space-x-1.5 sm:space-x-3 overflow-x-auto custom-scroll py-1 px-1">
+            <span class="text-xs text-blue-200 font-bold mr-1">射門押注:</span>
+            <button id="dgBet50" class="chip-btn px-3 py-1.5 rounded-lg bg-blue-900 border border-blue-400 text-xs font-bold shadow">$50</button>
+            <button id="dgBet100" class="chip-btn px-3 py-1.5 rounded-lg bg-indigo-900 border border-indigo-400 text-xs font-bold shadow">$100</button>
+            <button id="dgBet250" class="chip-btn px-3 py-1.5 rounded-lg bg-teal-900 border border-teal-400 text-xs font-bold shadow">$250</button>
+            <button id="dgBetHalfPot" class="chip-btn px-3 py-1.5 rounded-lg bg-amber-900 border border-amber-400 text-xs font-bold shadow">半池</button>
+            <button id="dgBetPot" class="chip-btn px-3 py-1.5 rounded-lg bg-rose-900 border border-rose-400 text-xs font-bold shadow">滿池 (All-in)</button>
+            <span class="text-xs text-yellow-300 font-bold ml-2 bg-black/50 px-2 py-1 rounded border border-yellow-500/30">注額: <span id="dgCurrentBetDisplay">$50</span></span>
+          </div>
+
+          <div class="flex items-center space-x-2 ml-auto">
+            <button id="dgStartRoundBtn" class="px-6 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-black text-sm shadow-xl border border-blue-300 transition transform active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed">
+              開新局 ($50 底注)
+            </button>
+          </div>
+        </div>
+
+        <div id="dgPlayControls" class="flex flex-wrap items-center justify-center gap-2 pt-1 border-t border-gray-800">
+          <button id="dgShootBtn" class="px-8 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-500 hover:to-green-400 text-white font-black text-sm shadow-lg border border-emerald-300 transition disabled:opacity-30 disabled:cursor-not-allowed">
+            ⚽ 射門 (Shoot)
+          </button>
+          <button id="dgPassBtn" class="px-6 py-2.5 rounded-xl bg-gray-700 hover:bg-gray-600 text-gray-200 font-bold text-xs sm:text-sm shadow border border-gray-500 transition disabled:opacity-30 disabled:cursor-not-allowed">
+            過牌 (Pass)
+          </button>
+          <button id="dgHigherBtn" class="hidden px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs sm:text-sm border border-amber-300 shadow transition disabled:opacity-30 disabled:cursor-not-allowed">
+            🔼 猜大 (Higher)
+          </button>
+          <button id="dgLowerBtn" class="hidden px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs sm:text-sm border border-sky-300 shadow transition disabled:opacity-30 disabled:cursor-not-allowed">
+            🔽 猜小 (Lower)
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Switch Game Confirmation Modal -->
+  <div id="switchConfirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+    <div class="bg-gradient-to-b from-gray-900 to-black border-2 border-amber-500/70 p-6 rounded-3xl max-w-md w-full shadow-2xl text-center transform scale-100 transition-transform">
+      <div class="text-4xl mb-3">⚠️</div>
+      <h3 class="text-lg sm:text-xl font-black text-amber-300 mb-2">確認切換遊戲？</h3>
+      <p class="text-xs sm:text-sm text-gray-300 mb-4 leading-relaxed">
+        準備切換至【<span id="switchTargetGameText" class="text-yellow-400 font-bold">遊戲</span>】！<br>切換後將會<strong class="text-red-400">重置刪除</strong>當前牌局的未完成進度與下注。您的錢包總資金將完整保留互通。
+      </p>
+      <div class="flex items-center justify-center space-x-3">
+        <button id="cancelSwitchBtn" class="px-5 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs sm:text-sm font-bold border border-gray-600 transition shadow">
+          取消 (留在此頁)
+        </button>
+        <button id="confirmSwitchBtn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black text-xs sm:text-sm font-black shadow-lg border border-yellow-200 transition">
+          確認切換
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over Modal -->
+  <div id="gameOverModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
+    <div class="bg-gradient-to-b from-gray-900 via-red-950 to-black border-2 border-red-500/70 p-6 rounded-3xl max-w-md w-full shadow-2xl text-center">
+      <div class="text-5xl mb-3">💸</div>
+      <h3 class="text-xl sm:text-2xl font-black text-red-400 mb-1 cinzel tracking-wider">GAME OVER</h3>
+      <h4 class="text-base font-bold text-yellow-300 mb-2">籌碼已耗盡！</h4>
+      <p class="text-xs sm:text-sm text-gray-300 mb-5 leading-relaxed">
+        您的錢包餘額已歸零，且 3 次儲值額度已全數使用完畢。<br>
+        勝敗乃兵家常事，點擊下方按鈕即可重新開始！
+      </p>
+      <button id="restartGameBtn" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-black text-sm font-black shadow-lg border border-yellow-200 transition transform active:scale-95">
+        🔄 重新開始 (獲得 $2,000 與 3 次儲值)
+      </button>
+    </div>
+  </div>
+
+  <!-- Rules Help Modal -->
+  <div id="rulesModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+    <div class="bg-gray-900 border border-amber-500/50 p-5 rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto custom-scroll shadow-2xl">
+      <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-3">
+        <h3 class="text-base font-bold text-yellow-400">📖 遊戲規則手冊</h3>
+        <button id="closeRulesBtn" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
+      </div>
+      <div class="text-xs text-gray-300 space-y-4 leading-relaxed">
+        <div>
+          <h4 class="font-bold text-amber-300 mb-1 text-sm border-l-2 border-amber-400 pl-2">♠ 21點 (Blackjack VIP)</h4>
+          <ul class="list-disc pl-5 space-y-1 mt-2">
+            <li>起手兩張牌，目標接近 21 點且不超過。</li>
+            <li><strong>天生 21 點</strong>：起手發滿 21 點直接獲勝，賠率 3:2。</li>
+            <li><strong>雙倍下注 (Double)</strong>：加倍下注，但只能再拿一張牌後強制停牌。</li>
+            <li><strong>分牌 (Split)</strong>：起手對子可多下同額注拆分兩手獨立操作（莊家亦會觸發分牌）。</li>
+            <li>莊家小於 17 點必補牌，滿 17 點強制停牌。</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-bold text-blue-400 mb-1 text-sm border-l-2 border-blue-400 pl-2">⚽ 射龍門 (Dragon Gate)</h4>
+          <ul class="list-disc pl-5 space-y-1 mt-2">
+            <li>開局每人繳納 $50 底注至公池彩金，輪流攻門。</li>
+            <li><strong>射門進球</strong>：第三張牌點數落在兩柱中間，從底池贏取押注額。</li>
+            <li><strong>💥 絕命撞柱</strong>：若第三張點數與任一門柱相同，<strong>賠雙倍注額</strong>入底池！</li>
+            <li><strong>對子猜大小</strong>：起手對子可猜大或小；若第三張又相同（三條），<strong>賠三倍注額</strong>！</li>
+            <li>連號無門時自動免費 Safe Pass。底池歸零時系統贊助補發 $200 救濟金。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="fixed top-14 left-1/2 transform -translate-x-1/2 z-50 flex flex-col items-center pointer-events-none space-y-2"></div>
+
+  <script>
+    class SafeSoundEngine {
+      constructor() {
+        this.ctx = null;
+        // 優先讀取 LocalStorage 記憶設定，預設開啟
+        const saved = localStorage.getItem('casinoSoundEnabled');
+        this.enabled = saved !== null ? saved === 'true' : true;
+      }
+      init() {
+        if (!this.ctx && typeof (window.AudioContext || window.webkitAudioContext) !== 'undefined') {
+          try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioCtx();
+          } catch (e) { console.warn('AudioContext failed:', e); }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume().catch(() => {});
+        }
+      }
+      toggle() {
+        this.enabled = !this.enabled;
+        localStorage.setItem('casinoSoundEnabled', this.enabled);
+        if (!this.enabled && this.ctx && this.ctx.state === 'running') {
+            this.ctx.suspend().catch(() => {});
+        } else if (this.enabled) {
+            this.playChip();
+        }
+        return this.enabled;
+      }
+      playChip() {
+        if (!this.enabled) return;
+        try {
+          this.init(); if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1400, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(700, this.ctx.currentTime + 0.05);
+          gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+          osc.connect(gain); gain.connect(this.ctx.destination);
+          osc.start(); osc.stop(this.ctx.currentTime + 0.06);
+        } catch (e) {}
+      }
+      playDeal() {
+        if (!this.enabled) return;
+        try {
+          this.init(); if (!this.ctx) return;
+          const bufferSize = this.ctx.sampleRate * 0.05;
+          const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = buffer;
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'bandpass'; filter.frequency.value = 1100;
+          const gain = this.ctx.createGain();
+          gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+          noise.connect(filter); filter.connect(gain); gain.connect(this.ctx.destination);
+          noise.start();
+        } catch (e) {}
+      }
+      playWin() {
+        if (!this.enabled) return;
+        try {
+          this.init(); if (!this.ctx) return;
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.18, this.ctx.currentTime + idx * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + idx * 0.08 + 0.2);
+            osc.connect(gain); gain.connect(this.ctx.destination);
+            osc.start(this.ctx.currentTime + idx * 0.08); osc.stop(this.ctx.currentTime + idx * 0.08 + 0.22);
+          });
+        } catch (e) {}
+      }
+      playBust() {
+        if (!this.enabled) return;
+        try {
+          this.init(); if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+          osc.frequency.linearRampToValueAtTime(80, this.ctx.currentTime + 0.35);
+          gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+          osc.connect(gain); gain.connect(this.ctx.destination);
+          osc.start(); osc.stop(this.ctx.currentTime + 0.36);
+        } catch (e) {}
+      }
+      playPost() {
+        if (!this.enabled) return;
+        try {
+          this.init(); if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(1800, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(400, this.ctx.currentTime + 0.4);
+          gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+          osc.connect(gain); gain.connect(this.ctx.destination);
+          osc.start(); osc.stop(this.ctx.currentTime + 0.42);
+        } catch (e) {}
+      }
+    }
+
+    const sound = new SafeSoundEngine();
+
+    const SUITS = [
+      { name: '♠', color: 'text-neutral-900' },
+      { name: '♥', color: 'text-rose-600' },
+      { name: '♣', color: 'text-neutral-900' },
+      { name: '♦', color: 'text-rose-600' }
+    ];
+    const VALUES = [
+      { val: '2', score: 2, rank: 2 }, { val: '3', score: 3, rank: 3 }, { val: '4', score: 4, rank: 4 },
+      { val: '5', score: 5, rank: 5 }, { val: '6', score: 6, rank: 6 }, { val: '7', score: 7, rank: 7 },
+      { val: '8', score: 8, rank: 8 }, { val: '9', score: 9, rank: 9 }, { val: '10', score: 10, rank: 10 },
+      { val: 'J', score: 10, rank: 11 }, { val: 'Q', score: 10, rank: 12 }, { val: 'K', score: 10, rank: 13 },
+      { val: 'A', score: 11, rank: 14 }
+    ];
+
+    const BOT_NAMES = ['精算師 Elena', '衝鋒者 Leo', '幸運星 Chloe', '穩健派 Ken', '夜貓子 Alex', '探戈 Max', '神秘客 Mia', '維加斯 Jack'];
+    const BOT_AVATARS = ['🤠', '🦊', '😎', '👩‍💼', '🎲', '🦁', '💃', '🕶️', '🐯', '💎'];
+
+    // Global Game State
+    let activeGame = 'blackjack';
+    let pendingSwitchTarget = null;
+    let globalBankroll = 2000;
+    let topUpRemaining = 3;
+    let isRotating = false; // 換位防呆鎖定
+
+    // Blackjack State
+    let bjDeck = [];
+    let bjRoundCounter = 0;
+    let bjState = 'BETTING'; 
+    let bjTurnIndex = 0;
+    let dealerHand = [];
+    let dealerHoleHidden = true;
+    let dealerIsSplit = false;
+    let dealerSplitHands = [[], []];
+    let bjSessionId = 0;
+
+    // Dragon Gate State
+    let dgDeck = [];
+    let dgRoundCounter = 0;
+    let dgPot = 1000;
+    let dgHumanBet = 50;
+    let dgLeftCard = null;
+    let dgRightCard = null;
+    let dgTargetCard = null;
+    let dgState = 'IDLE'; 
+    let dgTurnIndex = 0;
+    let dgSessionId = 0;
+
+    let SEATS = [];
+
+    function getHumanSeatIndex() { return SEATS.findIndex(s => !s.isBot); }
+    function getHumanPlayer() { return SEATS[getHumanSeatIndex()] || null; }
+    
+    function generateRandomBots(preservedBankroll = 2000) {
+      if (isNaN(preservedBankroll) || preservedBankroll < 0) preservedBankroll = 2000;
+      const usedNames = new Set();
+      const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+      const getUniqueName = () => {
+        let name = pickRandom(BOT_NAMES);
+        while (usedNames.has(name)) name = pickRandom(BOT_NAMES);
+        usedNames.add(name);
+        return name;
+      };
+
+      const humanSeatIndex = Math.floor(Math.random() * 4); // 1~4 席隨機入座
+      SEATS = [];
+
+      for (let i = 0; i < 4; i++) {
+        if (i === humanSeatIndex) {
+          SEATS.push({
+            id: i,
+            name: 'VIP 玩家 (您)',
+            avatar: '👑',
+            isBot: false,
+            bankroll: preservedBankroll,
+            bet: 50, // 預設底注，避免發牌按鍵反灰
+            hand: [],
+            status: '',
+            isSplit: false,
+            splitHands: [],
+            activeSplitIndex: 0,
+            dgStatus: ''
+          });
+        } else {
+          SEATS.push({
+            id: i,
+            name: getUniqueName(),
+            avatar: pickRandom(BOT_AVATARS),
+            isBot: true,
+            bankroll: Math.floor(Math.random() * 25 + 20) * 100,
+            bet: 50,
+            hand: [],
+            status: '',
+            isSplit: false,
+            splitHands: [],
+            activeSplitIndex: 0,
+            dgStatus: ''
+          });
+        }
+      }
+    }
+
+    function rotateSeats(gameName = '遊戲') {
+      if (SEATS.length >= 2) {
+        SEATS.unshift(SEATS.pop());
+      }
+      const newSeatNum = getHumanSeatIndex() + 1;
+      sound.playChip();
+      showToast(`🔄 已滿 3 局！全桌順時針換座，您現在移至【第 ${newSeatNum} 席】！`);
+      updateTableUI();
+      updateDragonGateUI();
+    }
+
+    function updateRoundCounters() {
+      const bjBadge = document.getElementById('bjRoundBadge');
+      if (bjBadge) bjBadge.innerText = `${(bjRoundCounter % 3) + 1}/3 局`;
+      const dgBadge = document.getElementById('dgRoundBadge');
+      if (dgBadge) dgBadge.innerText = `${(dgRoundCounter % 3) + 1}/3 局`;
+    }
+
+    function syncGlobalBankroll() {
+      const human = getHumanPlayer();
+      if (human && !isNaN(human.bankroll)) globalBankroll = human.bankroll;
+      if (globalBankroll < 0) globalBankroll = 0;
+      const display = document.getElementById('bankrollDisplay');
+      if (display) display.innerText = `$${Number(globalBankroll).toLocaleString()}`;
+    }
+
+    function updateTopUpBtnUI() {
+      const btn = document.getElementById('topUpBtn');
+      const text = document.getElementById('topUpBtnText');
+      if (!btn || !text) return;
+      if (topUpRemaining > 0) {
+        btn.disabled = false;
+        text.innerText = `儲值 $1,000 (${topUpRemaining}/3)`;
+      } else {
+        btn.disabled = true;
+        text.innerText = `已達儲值上限 (0/3)`;
+      }
+    }
+
+    function triggerGameOver() {
+      sound.playBust();
+      const modal = document.getElementById('gameOverModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function restartGame() {
+      topUpRemaining = 3;
+      globalBankroll = 2000;
+      updateTopUpBtnUI();
+      document.getElementById('gameOverModal')?.classList.add('hidden');
+      
+      generateRandomBots(2000);
+      bjRoundCounter = 0;
+      dgRoundCounter = 0;
+      dgPot = 1000;
+      bjState = 'BETTING';
+      dgState = 'IDLE';
+      isRotating = false;
+      
+      updateRoundCounters();
+      updateTableUI();
+      updateDragonGateUI();
+      sound.playWin();
+      showToast('🎉 遊戲已重新開始！獲得 $2,000 初始資金與 3 次儲值額度！');
+    }
+
+    function renderCardHTML(card, hidden = false) {
+      if (!card) return '';
+      if (hidden) {
+        return `
+          <div class="playing-card card-overlap w-14 h-20 sm:w-16 sm:h-24 rounded-lg bg-gradient-to-br from-red-800 to-red-950 border-2 border-amber-300/80 flex items-center justify-center shadow-lg transform -rotate-1">
+            <span class="text-amber-300 text-lg sm:text-xl font-bold">⚜️</span>
+          </div>
+        `;
+      }
+      return `
+        <div class="playing-card card-overlap w-14 h-20 sm:w-16 sm:h-24 rounded-lg bg-white border border-gray-300 flex flex-col justify-between p-1 shadow-lg transform rotate-0 hover:z-20">
+          <div class="text-[11px] sm:text-xs font-black leading-none ${card.color}">${card.val}</div>
+          <div class="text-center text-sm sm:text-base leading-none ${card.color}">${card.name}</div>
+          <div class="text-right text-[11px] sm:text-xs font-black leading-none ${card.color} rotate-180">${card.val}</div>
+        </div>
+      `;
+    }
+
+    function buildShoe(decks = 6) {
+      bjDeck = [];
+      for (let d = 0; d < decks; d++) {
+        for (const s of SUITS) {
+          for (const v of VALUES) {
+            bjDeck.push({ ...s, ...v, id: `${d}-${s.name}-${v.val}-${Math.random()}` });
+          }
+        }
+      }
+      for (let i = bjDeck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [bjDeck[i], bjDeck[j]] = [bjDeck[j], bjDeck[i]];
+      }
+      document.getElementById('shoeBadge').innerText = bjDeck.length;
+    }
+
+    function drawBjCard() {
+      if (bjDeck.length < 25) buildShoe(6);
+      const card = bjDeck.pop();
+      document.getElementById('shoeBadge').innerText = bjDeck.length;
+      return card;
+    }
+
+    function calculateHand(hand) {
+      if (!hand || !Array.isArray(hand) || hand.length === 0) return { total: 0, isSoft: false, isBust: false, is21: false, isBlackjack: false };
+      const valid = hand.filter(c => c && c.val);
+      let total = 0, aces = 0;
+      for (const c of valid) {
+        if (c.val === 'A') { aces++; total += 11; } else { total += c.score; }
+      }
+      while (total > 21 && aces > 0) { total -= 10; aces--; }
+      return { total, isSoft: aces > 0, isBust: total > 21, is21: total === 21, isBlackjack: (valid.length === 2 && total === 21) };
+    }
+
+    function canSplitHand(hand) {
+      if (!hand || hand.length !== 2 || !hand[0] || !hand[1]) return false;
+      if (hand[0].val === hand[1].val) return true;
+      const tens = ['10', 'J', 'Q', 'K'];
+      return tens.includes(hand[0].val) && tens.includes(hand[1].val);
+    }
+
+    function updateTableUI() {
+      const dealerContainer = document.getElementById('dealerHandContainer');
+      const dealerScoreBadge = document.getElementById('dealerScoreBadge');
+      const dealerSplitArea = document.getElementById('dealerSplitArea');
+
+      if (dealerIsSplit) {
+        dealerContainer?.classList.add('hidden');
+        dealerSplitArea?.classList.remove('hidden');
+        document.getElementById('dealerSplitScore1').innerText = calculateHand(dealerSplitHands[0]).total;
+        document.getElementById('dealerSplitScore2').innerText = calculateHand(dealerSplitHands[1]).total;
+        document.getElementById('dealerSplitSlot1').innerHTML = dealerSplitHands[0].map(c => renderCardHTML(c)).join('');
+        document.getElementById('dealerSplitSlot2').innerHTML = dealerSplitHands[1].map(c => renderCardHTML(c)).join('');
+        if (dealerScoreBadge) dealerScoreBadge.innerText = '分牌雙手';
+      } else {
+        dealerSplitArea?.classList.add('hidden');
+        dealerContainer?.classList.remove('hidden');
+        if (dealerContainer) {
+          if (dealerHand.length === 0) {
+            dealerContainer.innerHTML = `<span class="text-emerald-200/40 text-xs">等待發牌...</span>`;
+            if(dealerScoreBadge) dealerScoreBadge.innerText = '0 點';
+          } else if (dealerHoleHidden && dealerHand.length > 0) {
+            let html = renderCardHTML(dealerHand[0], true);
+            if (dealerHand.length > 1) html += renderCardHTML(dealerHand[1], false);
+            dealerContainer.innerHTML = html;
+            const visibleTotal = dealerHand.length > 1 ? calculateHand([dealerHand[1]]).total : 0;
+            if(dealerScoreBadge) dealerScoreBadge.innerText = dealerHand.length > 1 ? `${visibleTotal} + ? 點` : `? 點`;
+          } else {
+            dealerContainer.innerHTML = dealerHand.map(c => renderCardHTML(c)).join('');
+            const calc = calculateHand(dealerHand);
+            if(dealerScoreBadge) dealerScoreBadge.innerText = `${calc.total} 點${calc.isBust ? ' (爆牌)' : ''}`;
+          }
+        }
+      }
+
+      const seatsContainer = document.getElementById('seatsContainer');
+      if (seatsContainer) {
+        seatsContainer.innerHTML = SEATS.map((seat, index) => {
+          const isHuman = !seat.isBot;
+          const isCurrentTurn = (bjState === 'PLAYER_TURN' && bjTurnIndex === index);
+          let handHtml = ''; let scoreText = '';
+          if (seat.isSplit) {
+            handHtml = `
+              <div class="flex gap-1 justify-center w-full my-1">
+                <div class="p-1 rounded-lg border ${seat.activeSplitIndex === 0 && isCurrentTurn ? 'border-yellow-400 bg-yellow-950/40 shadow-inner' : 'border-gray-700 bg-black/30'} flex-1">
+                  <div class="text-[9px] text-gray-300">#1: ${calculateHand(seat.splitHands[0]).total}點</div>
+                  <div class="flex justify-center">${seat.splitHands[0].map(c => renderCardHTML(c)).join('')}</div>
+                </div>
+                <div class="p-1 rounded-lg border ${seat.activeSplitIndex === 1 && isCurrentTurn ? 'border-yellow-400 bg-yellow-950/40 shadow-inner' : 'border-gray-700 bg-black/30'} flex-1">
+                  <div class="text-[9px] text-gray-300">#2: ${calculateHand(seat.splitHands[1]).total}點</div>
+                  <div class="flex justify-center">${seat.splitHands[1].map(c => renderCardHTML(c)).join('')}</div>
+                </div>
+              </div>`;
+            scoreText = '分牌';
+          } else {
+            const calc = calculateHand(seat.hand);
+            scoreText = seat.hand.length > 0 ? `${calc.total}點${calc.isBust ? ' (爆)' : ''}` : '';
+            handHtml = `<div class="flex justify-center items-center min-h-[85px] my-1">${seat.hand.length > 0 ? seat.hand.map(c => renderCardHTML(c)).join('') : '<span class="text-gray-500 text-[10px]">未發牌</span>'}</div>`;
+          }
+
+          return `
+            <div class="rounded-2xl p-2.5 transition-all relative border flex flex-col justify-between overflow-hidden ${isHuman ? 'bg-amber-950/40 border-amber-500/70 shadow-lg' : 'bg-black/40 border-gray-700/70'} ${isCurrentTurn ? 'active-seat-glow' : ''}">
+              <div class="flex items-center justify-between border-b border-gray-700/50 pb-1 relative z-30">
+                <div class="flex items-center space-x-1 truncate">
+                  <span class="text-sm">${seat.avatar}</span>
+                  <span class="text-[11px] font-bold ${isHuman ? 'text-amber-300' : 'text-gray-200'} truncate">${seat.name} <span class="text-[9px] text-gray-400">(第${index + 1}席)</span></span>
+                </div>
+                <span class="text-[10px] font-bold text-yellow-400 drop-shadow-md">${scoreText}</span>
+              </div>
+              ${handHtml}
+              <div class="flex items-center justify-between text-[10px] pt-1.5 pb-0.5 mt-1 border-t border-gray-700/50 relative z-30 bg-black/60 rounded-lg px-1.5">
+                <div class="text-gray-300">籌碼: <strong class="text-yellow-300">$${Number(seat.bankroll).toLocaleString()}</strong></div>
+                <div class="bg-black/90 px-2 py-0.5 rounded text-amber-400 font-black border border-amber-500/80 shadow-lg text-[11px]">注: $${seat.bet}</div>
+              </div>
+              ${seat.status ? `
+                <div class="absolute inset-0 bg-black/75 backdrop-blur-[2px] rounded-2xl flex items-center justify-center p-2 z-20">
+                  <span class="text-xs sm:text-sm font-black tracking-wide text-center drop-shadow-lg ${seat.status.includes('贏') || seat.status.includes('BJ') || seat.status.includes('勝') ? 'text-yellow-300' : seat.status.includes('輸') || seat.status.includes('爆') ? 'text-red-400' : 'text-gray-300'}">${seat.status}</span>
+                </div>` : ''}
+            </div>
+          `;
+        }).join('');
+      }
+
+      const betControls = document.getElementById('betControls');
+      const playControls = document.getElementById('playControls');
+      const human = getHumanPlayer();
+      const isHumanTurn = (bjState === 'PLAYER_TURN' && bjTurnIndex === getHumanSeatIndex());
+
+      if (bjState === 'BETTING') {
+        betControls?.classList.remove('hidden');
+        playControls?.classList.add('hidden');
+      } else if (isHumanTurn) {
+        betControls?.classList.add('hidden');
+        playControls?.classList.remove('hidden');
+
+        const splitBtn = document.getElementById('splitBtn');
+        if (splitBtn && human) {
+          const canSplit = !human.isSplit && canSplitHand(human.hand) && human.bankroll >= human.bet;
+          splitBtn.disabled = !canSplit;
+        }
+
+        const doubleDownBtn = document.getElementById('doubleDownBtn');
+        if (doubleDownBtn && human) {
+          const canDouble = !human.isSplit && human.hand.length === 2 && human.bankroll >= human.bet;
+          doubleDownBtn.disabled = !canDouble;
+        }
+      } else {
+        betControls?.classList.add('hidden');
+        playControls?.classList.add('hidden');
+      }
+      syncGlobalBankroll();
+    }
+
+    async function startBlackjackRound() {
+      if (bjState !== 'BETTING' || isRotating) return;
+      const human = getHumanPlayer();
+      if (!human) return;
+
+      if (human.bankroll < 50) {
+        if (topUpRemaining > 0) showToast(`籌碼不足最低下注 $50！剩餘 ${topUpRemaining} 次儲值機會，請點擊上方【儲值】！`);
+        else triggerGameOver();
+        return;
+      }
+      if (human.bet < 50) human.bet = 50;
+      if (human.bet > human.bankroll) human.bet = human.bankroll;
+
+      bjSessionId++; const currentSession = bjSessionId;
+      bjState = 'DEALING';
+      dealerHand = []; dealerHoleHidden = true; dealerIsSplit = false; dealerSplitHands = [[], []];
+
+      SEATS.forEach(seat => {
+        seat.hand = []; seat.status = ''; seat.isSplit = false; seat.splitHands = []; seat.activeSplitIndex = 0;
+        if (seat.isBot) {
+          const randomBet = [50, 100, 150, 200, 300][Math.floor(Math.random() * 5)];
+          seat.bet = Math.min(seat.bankroll, randomBet);
+        }
+        seat.bankroll -= seat.bet;
+      });
+
+      updateTableUI();
+      sound.playDeal();
+      setMessage('荷官正在洗牌並發牌給所有玩家...');
+
+      for (let round = 0; round < 2; round++) {
+        for (const seat of SEATS) {
+          await delay(220); if (currentSession !== bjSessionId) return;
+          seat.hand.push(drawBjCard()); sound.playDeal(); updateTableUI();
+        }
+        await delay(250); if (currentSession !== bjSessionId) return;
+        dealerHand.push(drawBjCard()); sound.playDeal(); updateTableUI();
+      }
+
+      bjState = 'PLAYER_TURN';
+      bjTurnIndex = 0;
+      playNextPlayerTurn(currentSession);
+    }
+
+    async function playNextPlayerTurn(expectedSession = bjSessionId) {
+      if (expectedSession !== bjSessionId) return;
+      if (bjTurnIndex >= SEATS.length) { startDealerTurn(expectedSession); return; }
+
+      const currentSeat = SEATS[bjTurnIndex];
+      updateTableUI();
+
+      if (currentSeat.isBot) {
+        setMessage(`輪到 ${currentSeat.name} (第${bjTurnIndex + 1}席) 思考中...`);
+        await delay(600); if (expectedSession !== bjSessionId) return;
+        await handleBotTurn(currentSeat, expectedSession);
+        if (expectedSession !== bjSessionId) return;
+        bjTurnIndex++; playNextPlayerTurn(expectedSession);
+      } else {
+        const calc = calculateHand(currentSeat.hand);
+        if (calc.total === 21) {
+          setMessage(`輪到您 (第${bjTurnIndex + 1}席)！天生 21 點，自動停牌！`);
+          sound.playWin();
+          setTimeout(() => { if (expectedSession === bjSessionId) { bjTurnIndex++; playNextPlayerTurn(expectedSession); } }, 1200);
+          return;
+        }
+        setMessage(`輪到您 (第${bjTurnIndex + 1}席)！請選擇【加牌】、【停牌】或【雙倍】`);
+        updateTableUI();
+      }
+    }
+
+    async function handleBotTurn(bot, expectedSession = bjSessionId) {
+      if (expectedSession !== bjSessionId) return;
+      if (!bot.isSplit && canSplitHand(bot.hand) && bot.bankroll >= bot.bet && Math.random() < 0.65) {
+        bot.bankroll -= bot.bet; bot.isSplit = true;
+        bot.splitHands = [[bot.hand[0], drawBjCard()], [bot.hand[1], drawBjCard()]];
+        sound.playChip(); updateTableUI(); await delay(500);
+        for (let i = 0; i < 2; i++) {
+          if (expectedSession !== bjSessionId) return;
+          bot.activeSplitIndex = i;
+          let subCalc = calculateHand(bot.splitHands[i]);
+          while (subCalc.total < 16 && !subCalc.isBust) {
+            await delay(450); if (expectedSession !== bjSessionId) return;
+            bot.splitHands[i].push(drawBjCard()); sound.playDeal();
+            subCalc = calculateHand(bot.splitHands[i]); updateTableUI();
+          }
+        }
+        return;
+      }
+      let calc = calculateHand(bot.hand);
+      while (!calc.isBust) {
+        if (calc.total < 16 || (calc.total === 16 && Math.random() < 0.35)) {
+          await delay(500); if (expectedSession !== bjSessionId) return;
+          bot.hand.push(drawBjCard()); sound.playDeal();
+          calc = calculateHand(bot.hand); updateTableUI();
+        } else break;
+      }
+    }
+
+    function humanHit() {
+      const human = getHumanPlayer();
+      if (!human || bjState !== 'PLAYER_TURN' || bjTurnIndex !== getHumanSeatIndex()) return;
+      const card = drawBjCard(); sound.playDeal();
+
+      if (human.isSplit) {
+        human.splitHands[human.activeSplitIndex].push(card);
+        const calc = calculateHand(human.splitHands[human.activeSplitIndex]);
+        updateTableUI();
+        if (calc.isBust || calc.total === 21) {
+          if (calc.isBust) { sound.playBust(); showToast(`💥 第 ${human.activeSplitIndex + 1} 手爆牌了！`); }
+          setTimeout(() => {
+            if (human.activeSplitIndex === 0) {
+              human.activeSplitIndex = 1; showToast('切換至第 2 手！'); updateTableUI();
+              const calc2 = calculateHand(human.splitHands[1]);
+              if(calc2.total === 21) { setTimeout(() => { showToast('第 2 手 21 點！自動停牌'); bjTurnIndex++; playNextPlayerTurn(); }, 800); }
+            } else { bjTurnIndex++; playNextPlayerTurn(); }
+          }, 800);
+        }
+      } else {
+        human.hand.push(card);
+        const calc = calculateHand(human.hand);
+        updateTableUI();
+        if (calc.isBust) { sound.playBust(); showToast('💥 爆牌了！(Bust)'); setTimeout(() => { bjTurnIndex++; playNextPlayerTurn(); }, 800); } 
+        else if (calc.total === 21) { setTimeout(() => { bjTurnIndex++; playNextPlayerTurn(); }, 600); }
+      }
+    }
+
+    function humanStand() {
+      const human = getHumanPlayer();
+      if (!human || bjState !== 'PLAYER_TURN' || bjTurnIndex !== getHumanSeatIndex()) return;
+      if (human.isSplit && human.activeSplitIndex === 0) {
+        human.activeSplitIndex = 1; showToast('第 1 手停牌，切換至第 2 手！'); updateTableUI();
+        const calc2 = calculateHand(human.splitHands[1]);
+        if(calc2.total === 21) { setTimeout(() => { showToast('第 2 手 21 點！自動停牌'); bjTurnIndex++; playNextPlayerTurn(); }, 800); }
+        return;
+      }
+      bjTurnIndex++; playNextPlayerTurn();
+    }
+
+    function humanDoubleDown() {
+      const human = getHumanPlayer();
+      if (!human || bjState !== 'PLAYER_TURN' || bjTurnIndex !== getHumanSeatIndex()) return;
+      if (human.isSplit) { showToast('分牌後無法使用雙倍下注！'); return; }
+      if (human.bankroll < human.bet) { showToast('籌碼不足，無法雙倍下注！'); return; }
+      
+      human.bankroll -= human.bet;
+      human.bet *= 2;
+      sound.playChip();
+      human.hand.push(drawBjCard());
+      sound.playDeal();
+      const calc = calculateHand(human.hand);
+      updateTableUI();
+      
+      if (calc.isBust) { sound.playBust(); showToast('💥 雙倍下注後爆牌！(Bust)'); }
+      setTimeout(() => { bjTurnIndex++; playNextPlayerTurn(); }, 800);
+    }
+
+    function humanSplit() {
+      const human = getHumanPlayer();
+      if (!human || bjState !== 'PLAYER_TURN' || bjTurnIndex !== getHumanSeatIndex()) return;
+      if (human.isSplit || !canSplitHand(human.hand) || human.bankroll < human.bet) { showToast('無法分牌！請確認起手為對子且籌碼充足'); return; }
+      
+      human.bankroll -= human.bet; human.isSplit = true;
+      human.splitHands = [[human.hand[0], drawBjCard()], [human.hand[1], drawBjCard()]];
+      human.activeSplitIndex = 0;
+      sound.playChip(); sound.playDeal();
+      showToast('🔀 已成功分牌為雙手！請依序操作');
+      updateTableUI();
+      
+      const calc1 = calculateHand(human.splitHands[0]);
+      if(calc1.total === 21) { setTimeout(() => { human.activeSplitIndex = 1; updateTableUI(); }, 800); }
+    }
+
+    function humanSurrender() {
+      const human = getHumanPlayer();
+      if (!human || bjState !== 'PLAYER_TURN' || bjTurnIndex !== getHumanSeatIndex()) return;
+      human.bankroll += Math.floor(human.bet / 2);
+      human.status = '投降 (退回50%)';
+      updateTableUI();
+      bjTurnIndex++; playNextPlayerTurn();
+    }
+
+    async function startDealerTurn(expectedSession = bjSessionId) {
+      if (expectedSession !== bjSessionId) return;
+      bjState = 'DEALER_TURN'; dealerHoleHidden = false;
+      setMessage('荷官翻開底牌...'); updateTableUI();
+      await delay(600); if (expectedSession !== bjSessionId) return;
+
+      if (canSplitHand(dealerHand) && Math.random() < 0.5) {
+        dealerIsSplit = true;
+        dealerSplitHands = [[dealerHand[0], drawBjCard()], [dealerHand[1], drawBjCard()]];
+        sound.playChip(); setMessage('⚡ 莊家起手對子觸發【莊家分牌】！'); updateTableUI();
+        await delay(700); if (expectedSession !== bjSessionId) return;
+        for (let i = 0; i < 2; i++) {
+          let calc = calculateHand(dealerSplitHands[i]);
+          while (calc.total < 17) {
+            await delay(600); if (expectedSession !== bjSessionId) return;
+            dealerSplitHands[i].push(drawBjCard()); sound.playDeal();
+            calc = calculateHand(dealerSplitHands[i]); updateTableUI();
+          }
+        }
+      } else {
+        let dealerCalc = calculateHand(dealerHand);
+        while (dealerCalc.total < 17) {
+          await delay(600); if (expectedSession !== bjSessionId) return;
+          dealerHand.push(drawBjCard()); sound.playDeal();
+          dealerCalc = calculateHand(dealerHand); updateTableUI();
+        }
+      }
+      await delay(500); if (expectedSession !== bjSessionId) return;
+      settleBlackjackRound();
+    }
+
+    function settleBlackjackRound() {
+      const dealerCalc = calculateHand(dealerHand);
+      SEATS.forEach(seat => {
+        if (seat.status && seat.status.includes('投降')) return;
+        const evaluateAgainstScore = (pHand, pBet) => {
+          const pCalc = calculateHand(pHand);
+          if (pCalc.isBust) return { result: '爆牌 (輸)', won: 0 };
+          if (dealerIsSplit) {
+            const d1 = calculateHand(dealerSplitHands[0]), d2 = calculateHand(dealerSplitHands[1]);
+            let subWon = 0;
+            [d1, d2].forEach(d => {
+              if (d.isBust || pCalc.total > d.total) subWon += pBet;
+              else if (pCalc.total === d.total) subWon += Math.floor(pBet / 2);
+            });
+            return { result: subWon > pBet ? '分牌勝' : subWon === pBet ? '和局' : '負', won: subWon };
+          } else {
+            if (dealerCalc.isBust || pCalc.total > dealerCalc.total) {
+              return { result: pCalc.isBlackjack ? 'Blackjack 贏 3:2' : '獲勝', won: pCalc.isBlackjack ? Math.floor(pBet * 2.5) : pBet * 2 };
+            }
+            if (pCalc.total === dealerCalc.total) return { result: '和局 (Push)', won: pBet };
+            return { result: '莊家勝', won: 0 };
+          }
+        };
+
+        if (seat.isSplit) {
+          const res1 = evaluateAgainstScore(seat.splitHands[0], seat.bet);
+          const res2 = evaluateAgainstScore(seat.splitHands[1], seat.bet);
+          seat.bankroll += (res1.won + res2.won);
+          seat.status = `#1:${res1.result} | #2:${res2.result}`;
+        } else {
+          const res = evaluateAgainstScore(seat.hand, seat.bet);
+          seat.bankroll += res.won;
+          seat.status = res.result;
+        }
+      });
+
+      const human = getHumanPlayer();
+      if (human && (human.status.includes('贏') || human.status.includes('勝'))) sound.playWin();
+
+      // Ensure bet UI adjusts smoothly if they just lost money
+      if (human && human.bet > human.bankroll && human.bankroll >= 50) human.bet = human.bankroll;
+      else if (human && human.bankroll < 50) human.bet = 50; // Keeps it clean for next validation
+
+      bjState = 'BETTING';
+      setMessage('對局結束！點擊【發牌】進行下一局');
+      updateTableUI(); 
+
+      if (human && human.bankroll <= 0) {
+        human.bankroll = 0; syncGlobalBankroll();
+        if (topUpRemaining <= 0) setTimeout(triggerGameOver, 1000);
+        else showToast(`⚠️ 您的籌碼已耗盡！您還有 ${topUpRemaining} 次儲值機會，請及時儲值！`);
+      }
+
+      bjRoundCounter++; updateRoundCounters();
+      if (bjRoundCounter % 3 === 0) {
+        isRotating = true;
+        setTimeout(() => { rotateSeats('21點'); isRotating = false; updateTableUI(); }, 1200);
+      }
+    }
+
+    function initDragonGateDeck() {
+      dgDeck = [];
+      for (const s of SUITS) {
+        for (const v of VALUES) { dgDeck.push({ ...s, ...v }); }
+      }
+      for (let i = dgDeck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [dgDeck[i], dgDeck[j]] = [dgDeck[j], dgDeck[i]];
+      }
+    }
+    function drawDgCard() { if (dgDeck.length < 5) initDragonGateDeck(); return dgDeck.pop(); }
+
+    function updateDragonGateUI() {
+      document.getElementById('dgPotDisplay').innerText = `$${Number(dgPot).toLocaleString()}`;
+      const leftSlot = document.getElementById('dgLeftCard');
+      const rightSlot = document.getElementById('dgRightCard');
+      const targetSlot = document.getElementById('dgTargetCard');
+      const probBadge = document.getElementById('dgProbabilityBadge');
+
+      if (leftSlot) leftSlot.innerHTML = dgLeftCard ? renderCardHTML(dgLeftCard) : '<span class="text-blue-400/40 text-xs">空</span>';
+      if (rightSlot) rightSlot.innerHTML = dgRightCard ? renderCardHTML(dgRightCard) : '<span class="text-blue-400/40 text-xs">空</span>';
+      if (targetSlot) targetSlot.innerHTML = dgTargetCard ? renderCardHTML(dgTargetCard) : '<span class="text-yellow-400/40 text-xs font-bold">待射門</span>';
+
+      if (probBadge) {
+        if (dgLeftCard && dgRightCard) {
+          const min = Math.min(dgLeftCard.rank, dgRightCard.rank);
+          const max = Math.max(dgLeftCard.rank, dgRightCard.rank);
+          const diff = max - min;
+          if (diff === 0) probBadge.innerHTML = `<span class="text-amber-300 font-bold">起手對子 (${dgLeftCard.val})！可選【猜大/猜小】(三條賠三倍)</span>`;
+          else if (diff === 1) probBadge.innerHTML = `<span class="text-rose-300 font-bold">連號無門柱區間！請點擊【連號安全過牌】</span>`;
+          else probBadge.innerHTML = `球門範圍: <strong class="text-yellow-300">${min + 1} ~ ${max - 1}</strong> (${diff - 1}張牌)`;
+        } else probBadge.innerText = '門柱未就緒';
+      }
+
+      const dgSeatsContainer = document.getElementById('dgSeatsContainer');
+      if (dgSeatsContainer) {
+        dgSeatsContainer.innerHTML = SEATS.map((seat, index) => {
+          const isHuman = !seat.isBot;
+          const isTurn = (dgState === 'WAITING_ACTION' && dgTurnIndex === index);
+          return `
+            <div class="rounded-2xl p-2.5 transition-all relative border flex flex-col justify-between ${isHuman ? 'bg-blue-950/40 border-blue-500/70 shadow-lg' : 'bg-black/40 border-gray-700/70'} ${isTurn ? 'active-seat-glow' : ''}">
+              <div class="flex items-center justify-between border-b border-blue-900/40 pb-1">
+                <span class="text-xs font-bold ${isHuman ? 'text-blue-300' : 'text-gray-200'} truncate">${seat.avatar} ${seat.name} <span class="text-[9px] text-gray-400">(第${index + 1}席)</span></span>
+              </div>
+              <div class="my-2 text-center text-xs h-4">${seat.dgStatus ? `<span class="font-bold text-yellow-300">${seat.dgStatus}</span>` : '<span class="text-gray-500 text-[10px]">候命中</span>'}</div>
+              <div class="flex items-center justify-between text-[10px] pt-1 border-t border-blue-900/40">
+                <span class="text-gray-300">錢包: <strong class="text-yellow-300">$${Number(seat.bankroll).toLocaleString()}</strong></span>
+              </div>
+            </div>`;
+        }).join('');
+      }
+
+      const isHumanTurn = (dgState === 'WAITING_ACTION' && dgTurnIndex === getHumanSeatIndex());
+      const shootBtn = document.getElementById('dgShootBtn'), passBtn = document.getElementById('dgPassBtn');
+      const higherBtn = document.getElementById('dgHigherBtn'), lowerBtn = document.getElementById('dgLowerBtn');
+      
+      document.getElementById('dgStartRoundBtn').disabled = (dgState !== 'IDLE' || isRotating);
+
+      if (shootBtn && passBtn && higherBtn && lowerBtn) {
+        if (isHumanTurn && dgLeftCard && dgRightCard) {
+          const isPair = dgLeftCard.rank === dgRightCard.rank;
+          const isConsecutive = Math.abs(dgLeftCard.rank - dgRightCard.rank) === 1;
+          shootBtn.disabled = false; passBtn.disabled = false; higherBtn.disabled = false; lowerBtn.disabled = false;
+          if (isPair) {
+            shootBtn.classList.add('hidden'); passBtn.classList.remove('hidden'); higherBtn.classList.remove('hidden'); lowerBtn.classList.remove('hidden');
+            passBtn.innerText = '過牌 (Pass)';
+          } else if (isConsecutive) {
+            shootBtn.classList.add('hidden'); passBtn.classList.remove('hidden'); higherBtn.classList.add('hidden'); lowerBtn.classList.add('hidden');
+            passBtn.innerText = '🛡️ 連號安全過牌 (Safe Pass)';
+          } else {
+            shootBtn.classList.remove('hidden'); passBtn.classList.remove('hidden'); higherBtn.classList.add('hidden'); lowerBtn.classList.add('hidden');
+            passBtn.innerText = '過牌 (Pass)';
+          }
+        } else {
+          shootBtn.disabled = true; passBtn.disabled = true; higherBtn.disabled = true; lowerBtn.disabled = true;
+          shootBtn.classList.remove('hidden'); passBtn.classList.remove('hidden'); higherBtn.classList.add('hidden'); lowerBtn.classList.add('hidden');
+          passBtn.innerText = '過牌 (Pass)';
+        }
+      }
+
+      const human = getHumanPlayer();
+      if (human && dgHumanBet > human.bankroll) dgHumanBet = Math.max(50, human.bankroll);
+      document.getElementById('dgCurrentBetDisplay').innerText = `$${dgHumanBet}`;
+      syncGlobalBankroll();
+    }
+
+    async function startDragonGateRound() {
+      if (dgState !== 'IDLE' || isRotating) return;
+      const human = getHumanPlayer(); if (!human) return;
+
+      if (human.bankroll < 50) {
+        if (topUpRemaining > 0) showToast(`籌碼不足 $50 底注！剩餘 ${topUpRemaining} 次儲值機會，請點擊上方【儲值】！`);
+        else triggerGameOver();
+        return;
+      }
+
+      dgSessionId++; const currentSession = dgSessionId;
+      SEATS.forEach(seat => {
+        if (seat.bankroll < 50) seat.bankroll = 1000;
+        seat.bankroll -= 50; dgPot += 50; seat.dgStatus = '';
+      });
+
+      sound.playChip(); showToast('全桌已繳納 $50 底注進入公池！');
+      dgTurnIndex = 0; updateDragonGateUI();
+      playNextDragonGateTurn(currentSession);
+    }
+
+    async function playNextDragonGateTurn(expectedSession = dgSessionId) {
+      if (expectedSession !== dgSessionId) return;
+      if (dgTurnIndex >= SEATS.length) {
+        dgState = 'IDLE'; setDgMessage('本輪射門結束！點擊【開新局】繼續挑戰');
+        dgRoundCounter++; updateRoundCounters();
+        if (dgRoundCounter % 3 === 0) {
+          isRotating = true;
+          setTimeout(() => { rotateSeats('射龍門'); isRotating = false; updateDragonGateUI(); }, 1200);
+        }
+        updateDragonGateUI(); return;
+      }
+
+      dgState = 'DEALING_GATE';
+      dgLeftCard = null; dgRightCard = null; dgTargetCard = null; updateDragonGateUI();
+      const currentSeat = SEATS[dgTurnIndex];
+      setDgMessage(`正在為 ${currentSeat.name} (第${dgTurnIndex + 1}席) 開門柱...`);
+      await delay(380); if (expectedSession !== dgSessionId) return;
+
+      dgLeftCard = drawDgCard(); sound.playDeal(); updateDragonGateUI();
+      await delay(350); if (expectedSession !== dgSessionId) return;
+      dgRightCard = drawDgCard(); sound.playDeal(); updateDragonGateUI();
+      await delay(350); if (expectedSession !== dgSessionId) return;
+
+      dgState = 'WAITING_ACTION'; updateDragonGateUI();
+
+      if (currentSeat.isBot) {
+        await handleDgBotTurn(currentSeat, expectedSession);
+        if (expectedSession !== dgSessionId) return;
+        dgTurnIndex++; playNextDragonGateTurn(expectedSession);
+      } else {
+        const isPair = dgLeftCard.rank === dgRightCard.rank;
+        const isConsecutive = Math.abs(dgLeftCard.rank - dgRightCard.rank) === 1;
+        if (isPair) setDgMessage(`輪到您 (第${dgTurnIndex + 1}席)！起手對子，請選擇【猜大】或【猜小】`);
+        else if (isConsecutive) setDgMessage(`輪到您 (第${dgTurnIndex + 1}席)！兩柱連號，請點擊【連號安全過牌】`);
+        else setDgMessage(`輪到您 (第${dgTurnIndex + 1}席)！請設定注額並決定【射門】或【過牌】`);
+        updateDragonGateUI();
+      }
+    }
+
+    async function handleDgBotTurn(bot, expectedSession = dgSessionId) {
+      await delay(600); if (expectedSession !== dgSessionId) return;
+      const min = Math.min(dgLeftCard.rank, dgRightCard.rank), max = Math.max(dgLeftCard.rank, dgRightCard.rank);
+      const diff = max - min;
+      if (diff === 1) { bot.dgStatus = '連號安全 Pass'; updateDragonGateUI(); await delay(500); return; }
+      if (diff === 0) { await executeDgShot(bot, Math.min(bot.bankroll, 100), Math.random() < 0.5 ? 'HIGHER' : 'LOWER', expectedSession); return; }
+      if (diff <= 3 && Math.random() < 0.6) { bot.dgStatus = '球門太窄，謹慎 Pass'; updateDragonGateUI(); await delay(500); return; }
+      await executeDgShot(bot, Math.min(bot.bankroll, Math.min(dgPot, [50, 100, 200][Math.floor(Math.random() * 3)])), 'SHOOT', expectedSession);
+    }
+
+    async function executeDgShot(player, betAmount, mode = 'SHOOT', expectedSession = dgSessionId) {
+      if (expectedSession !== dgSessionId) return;
+      dgTargetCard = drawDgCard(); sound.playDeal(); updateDragonGateUI();
+      await delay(500); if (expectedSession !== dgSessionId) return;
+
+      const targetRank = dgTargetCard.rank, leftRank = dgLeftCard.rank, rightRank = dgRightCard.rank;
+      const minRank = Math.min(leftRank, rightRank), maxRank = Math.max(leftRank, rightRank);
+
+      if (leftRank === rightRank) {
+        if (targetRank === leftRank) {
+          sound.playPost(); const penalty = betAmount * 3;
+          player.bankroll = Math.max(0, player.bankroll - penalty); dgPot += penalty;
+          player.dgStatus = `💥 三條極刑！撞柱賠 3 倍 (-$${penalty})`; showToast(`${player.name} 抽出同點三條！極刑罰 3 倍注額！`);
+        } else if ((mode === 'HIGHER' && targetRank > leftRank) || (mode === 'LOWER' && targetRank < leftRank)) {
+          sound.playWin(); player.bankroll += betAmount; dgPot = Math.max(0, dgPot - betAmount);
+          player.dgStatus = `🎯 猜對獲勝！(+$${betAmount})`;
+        } else {
+          sound.playBust(); player.bankroll = Math.max(0, player.bankroll - betAmount); dgPot += betAmount;
+          player.dgStatus = `❌ 猜錯落敗 (-$${betAmount})`;
+        }
+      } else {
+        if (targetRank === leftRank || targetRank === rightRank) {
+          sound.playPost(); const penalty = betAmount * 2;
+          player.bankroll = Math.max(0, player.bankroll - penalty); dgPot += penalty;
+          player.dgStatus = `💥 絕命撞柱！賠 2 倍 (-$${penalty})`; showToast(`${player.name} 命中門柱！觸發 2 倍懲罰！`);
+        } else if (targetRank > minRank && targetRank < maxRank) {
+          sound.playWin(); const winAmount = Math.min(dgPot, betAmount);
+          player.bankroll += winAmount; dgPot = Math.max(0, dgPot - winAmount);
+          player.dgStatus = `⚽ 漂亮進球！(+$${winAmount})`;
+        } else {
+          sound.playBust(); player.bankroll = Math.max(0, player.bankroll - betAmount); dgPot += betAmount;
+          player.dgStatus = `🚫 出界未進 (-$${betAmount})`;
+        }
+      }
+
+      // Check auto replenish pot
+      if (dgPot <= 0) {
+        dgPot = 200;
+        setTimeout(() => showToast('🏦 底池已被清空！系統自動贊助 $200 進入公池！'), 500);
+      }
+
+      if (!player.isBot && player.bankroll <= 0) {
+        player.bankroll = 0; syncGlobalBankroll();
+        if (topUpRemaining <= 0) setTimeout(triggerGameOver, 1000);
+        else showToast(`⚠️ 您的籌碼已耗盡！您還有 ${topUpRemaining} 次儲值機會，請及時儲值！`);
+      }
+      updateDragonGateUI(); await delay(700);
+    }
+
+    function requestGameSwitch(targetGame) {
+      if (targetGame === activeGame || isRotating) return;
+      pendingSwitchTarget = targetGame;
+      document.getElementById('switchTargetGameText').innerText = targetGame === 'blackjack' ? '21點 (Blackjack VIP)' : '射龍門 (Dragon Gate)';
+      document.getElementById('switchConfirmModal')?.classList.remove('hidden');
+    }
+
+    function confirmGameSwitch() {
+      if (!pendingSwitchTarget) return;
+      activeGame = pendingSwitchTarget; pendingSwitchTarget = null;
+      dgSessionId++; bjSessionId++; isRotating = false;
+      document.getElementById('switchConfirmModal')?.classList.add('hidden');
+
+      bjState = 'BETTING'; bjRoundCounter = 0; dealerHand = [];
+      SEATS.forEach(s => { s.hand = []; s.status = ''; s.isSplit = false; s.splitHands = []; s.dgStatus = ''; });
+      dgState = 'IDLE'; dgRoundCounter = 0; dgLeftCard = null; dgRightCard = null; dgTargetCard = null;
+
+      const bjView = document.getElementById('blackjackView'), dgView = document.getElementById('dragonGateView');
+      const navBj = document.getElementById('navBlackjackBtn'), navDg = document.getElementById('navDragonGateBtn');
+      if (activeGame === 'blackjack') {
+        bjView?.classList.remove('hidden'); dgView?.classList.add('hidden');
+        navBj?.classList.add('bg-amber-500', 'text-black'); navBj?.classList.remove('text-gray-300');
+        navDg?.classList.remove('bg-blue-600', 'text-white'); navDg?.classList.add('text-gray-300');
+      } else {
+        bjView?.classList.add('hidden'); dgView?.classList.remove('hidden');
+        navDg?.classList.add('bg-blue-600', 'text-white'); navDg?.classList.remove('text-gray-300');
+        navBj?.classList.remove('bg-amber-500', 'text-black'); navBj?.classList.add('text-gray-300');
+      }
+      updateRoundCounters(); updateTableUI(); updateDragonGateUI();
+      showToast(`已成功切換至【${activeGame === 'blackjack' ? '21點' : '射龍門'}】！`);
+    }
+
+    function setMessage(msg) { const b = document.getElementById('actionMessage'); if(b) b.innerText = msg; }
+    function setDgMessage(msg) { const b = document.getElementById('dgMessage'); if(b) b.innerText = msg; }
+    function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+    function showToast(text) {
+      const c = document.getElementById('toastContainer'); if (!c) return;
+      const el = document.createElement('div');
+      el.className = 'bg-black/95 text-yellow-300 text-xs sm:text-sm font-bold px-5 py-2.5 rounded-full border border-amber-500/80 shadow-2xl z-50 transform transition-all';
+      el.innerText = text; c.appendChild(el);
+      setTimeout(() => el.remove(), 2500);
+    }
+
+    function initEventListeners() {
+      // Audio Control
+      const audioBtn = document.getElementById('audioToggleBtn');
+      const updateAudioUI = () => {
+          if (sound.enabled) {
+              document.getElementById('audioIcon').innerText = '🔊'; document.getElementById('audioText').innerText = '音效: 開';
+              audioBtn?.classList.replace('border-rose-500/60', 'border-emerald-500/60');
+              audioBtn?.classList.replace('text-rose-300', 'text-emerald-300');
+          } else {
+              document.getElementById('audioIcon').innerText = '🔇'; document.getElementById('audioText').innerText = '音效: 靜音';
+              audioBtn?.classList.replace('border-emerald-500/60', 'border-rose-500/60');
+              audioBtn?.classList.replace('text-emerald-300', 'text-rose-300');
+          }
+      };
+      updateAudioUI();
+      audioBtn?.addEventListener('click', () => { sound.toggle(); updateAudioUI(); });
+
+      // Navs & Modals
+      document.getElementById('navBlackjackBtn')?.addEventListener('click', () => requestGameSwitch('blackjack'));
+      document.getElementById('navDragonGateBtn')?.addEventListener('click', () => requestGameSwitch('dragongate'));
+      document.getElementById('cancelSwitchBtn')?.addEventListener('click', () => { document.getElementById('switchConfirmModal')?.classList.add('hidden'); pendingSwitchTarget = null; });
+      document.getElementById('confirmSwitchBtn')?.addEventListener('click', confirmGameSwitch);
+      document.getElementById('rulesBtn')?.addEventListener('click', () => document.getElementById('rulesModal')?.classList.remove('hidden'));
+      document.getElementById('closeRulesBtn')?.addEventListener('click', () => document.getElementById('rulesModal')?.classList.add('hidden'));
+
+      // Top-up
+      document.getElementById('topUpBtn')?.addEventListener('click', () => {
+        if (topUpRemaining <= 0) { showToast('⚠️ 儲值次數已達上限 (3/3)，無法再儲值！'); return; }
+        topUpRemaining--; updateTopUpBtnUI();
+        const human = getHumanPlayer();
+        if (human) { human.bankroll += 1000; globalBankroll = human.bankroll; } else { globalBankroll += 1000; }
+        sound.playWin(); syncGlobalBankroll(); updateTableUI(); updateDragonGateUI();
+        showToast(`💰 成功儲值 $1,000！(剩餘額度: ${topUpRemaining} 次)`);
+      });
+
+      // Randomize / Restart
+      document.getElementById('restartGameBtn')?.addEventListener('click', restartGame);
+      document.getElementById('randomizeTableBtn')?.addEventListener('click', () => {
+        if (bjState !== 'BETTING' || dgState !== 'IDLE' || isRotating) { showToast('請於局間空檔（尚未發牌時）再進行換桌！'); return; }
+        dgSessionId++; bjSessionId++; generateRandomBots(globalBankroll);
+        bjRoundCounter = 0; dgRoundCounter = 0;
+        updateRoundCounters(); updateTableUI(); updateDragonGateUI();
+        showToast(`🎲 牌桌已重洗！您本次入座於【第 ${getHumanSeatIndex() + 1} 席】`);
+      });
+
+      // Blackjack Chip Bets
+      const chips = [ { id: 'chip50', val: 50 }, { id: 'chip100', val: 100 }, { id: 'chip250', val: 250 }, { id: 'chip500', val: 500 }, { id: 'chip1000', val: 1000 }, { id: 'chip2000', val: 2000 } ];
+      chips.forEach(({ id, val }) => {
+        document.getElementById(id)?.addEventListener('click', () => {
+          const human = getHumanPlayer(); if (!human || bjState !== 'BETTING') return;
+          human.status = ''; // 點擊籌碼時，自動清除前一局的黑影遮罩
+          if (human.bet + val > human.bankroll) { human.bet = human.bankroll; showToast('已達目前錢包全額！'); } 
+          else human.bet += val;
+          sound.playChip(); updateTableUI();
+        });
+      });
+      document.getElementById('clearBetBtn')?.addEventListener('click', () => {
+        const human = getHumanPlayer(); if (!human || bjState !== 'BETTING') return;
+        human.status = ''; // 點擊清除時，自動清除前一局的黑影遮罩
+        human.bet = 50; sound.playChip(); updateTableUI();
+      });
+      document.getElementById('doubleBetBtn')?.addEventListener('click', () => {
+        const human = getHumanPlayer(); if (!human || bjState !== 'BETTING') return;
+        human.status = ''; // 點擊雙倍時，自動清除前一局的黑影遮罩
+        human.bet = Math.min(human.bankroll, human.bet * 2); sound.playChip(); updateTableUI();
+      });
+
+      // Blackjack Actions
+      document.getElementById('dealBtn')?.addEventListener('click', startBlackjackRound);
+      document.getElementById('hitBtn')?.addEventListener('click', humanHit);
+      document.getElementById('standBtn')?.addEventListener('click', humanStand);
+      document.getElementById('doubleDownBtn')?.addEventListener('click', humanDoubleDown);
+      document.getElementById('splitBtn')?.addEventListener('click', humanSplit);
+      document.getElementById('surrenderBtn')?.addEventListener('click', humanSurrender);
+
+      // Dragon Gate Actions
+      document.getElementById('dgStartRoundBtn')?.addEventListener('click', startDragonGateRound);
+      document.getElementById('dgShootBtn')?.addEventListener('click', async () => {
+        const human = getHumanPlayer(); if (!human || dgState !== 'WAITING_ACTION' || dgTurnIndex !== getHumanSeatIndex()) return;
+        dgState = 'ACTION_IN_PROGRESS'; updateDragonGateUI(); const currentSession = dgSessionId;
+        const bet = Math.min(human.bankroll, dgHumanBet);
+        await executeDgShot(human, bet, 'SHOOT', currentSession);
+        if (currentSession !== dgSessionId) return; dgTurnIndex++; playNextDragonGateTurn(currentSession);
+      });
+      document.getElementById('dgPassBtn')?.addEventListener('click', async () => {
+        const human = getHumanPlayer(); if (!human || dgState !== 'WAITING_ACTION' || dgTurnIndex !== getHumanSeatIndex()) return;
+        dgState = 'ACTION_IN_PROGRESS'; updateDragonGateUI(); const currentSession = dgSessionId;
+        const isConsecutive = dgLeftCard && dgRightCard && Math.abs(dgLeftCard.rank - dgRightCard.rank) === 1;
+        human.dgStatus = isConsecutive ? '連號安全過牌 (Pass)' : '選擇過牌 (Pass)';
+        updateDragonGateUI(); await delay(400);
+        if (currentSession !== dgSessionId) return; dgTurnIndex++; playNextDragonGateTurn(currentSession);
+      });
+      document.getElementById('dgHigherBtn')?.addEventListener('click', async () => {
+        const human = getHumanPlayer(); if (!human || dgState !== 'WAITING_ACTION' || dgTurnIndex !== getHumanSeatIndex()) return;
+        dgState = 'ACTION_IN_PROGRESS'; updateDragonGateUI(); const currentSession = dgSessionId;
+        const bet = Math.min(human.bankroll, dgHumanBet);
+        await executeDgShot(human, bet, 'HIGHER', currentSession);
+        if (currentSession !== dgSessionId) return; dgTurnIndex++; playNextDragonGateTurn(currentSession);
+      });
+      document.getElementById('dgLowerBtn')?.addEventListener('click', async () => {
+        const human = getHumanPlayer(); if (!human || dgState !== 'WAITING_ACTION' || dgTurnIndex !== getHumanSeatIndex()) return;
+        dgState = 'ACTION_IN_PROGRESS'; updateDragonGateUI(); const currentSession = dgSessionId;
+        const bet = Math.min(human.bankroll, dgHumanBet);
+        await executeDgShot(human, bet, 'LOWER', currentSession);
+        if (currentSession !== dgSessionId) return; dgTurnIndex++; playNextDragonGateTurn(currentSession);
+      });
+
+      // Dragon Gate Bets
+      document.getElementById('dgBet50')?.addEventListener('click', () => { dgHumanBet = 50; updateDragonGateUI(); });
+      document.getElementById('dgBet100')?.addEventListener('click', () => { dgHumanBet = 100; updateDragonGateUI(); });
+      document.getElementById('dgBet250')?.addEventListener('click', () => { dgHumanBet = 250; updateDragonGateUI(); });
+      document.getElementById('dgBetHalfPot')?.addEventListener('click', () => { dgHumanBet = Math.max(50, Math.floor(dgPot / 2)); updateDragonGateUI(); });
+      document.getElementById('dgBetPot')?.addEventListener('click', () => { dgHumanBet = Math.max(50, dgPot); updateDragonGateUI(); });
+    }
+
+    // Bootstrap
+    window.onload = function() {
+      buildShoe(6); initDragonGateDeck(); generateRandomBots(2000);
+      initEventListeners(); updateTopUpBtnUI(); updateRoundCounters(); updateTableUI(); updateDragonGateUI();
+      setTimeout(() => { showToast(`🎲 歡迎入座！您本次被隨機安排在【第 ${getHumanSeatIndex() + 1} 席】`); }, 500);
+    };
+  </script>
+</body>
+</html>
